@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TriviaForce</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>&#129504;&#9889; TriviaForce</h1>
+    <div class="header-actions">
+      <button id="themeToggle" title="Toggle dark/light theme">Dark</button>
+      <button id="adminToggle">Admin</button>
+      <a href="/archive">Archive</a>
+    </div>
+  </header>
+
+  <!-- Admin panel (hidden by default) -->
+  <div id="adminPanel" class="admin-panel" style="display:none; margin: 1rem;">
+    <h3>Admin</h3>
+    <div class="admin-row">
+      <input type="password" id="adminPassword" placeholder="Admin password">
+    </div>
+    <div style="margin-bottom: 1rem;">
+      <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem;">Create New Quiz</h4>
+      <input type="text" id="quizTitle" placeholder="Quiz title (e.g. Week 14 - Mar 30)">
+      <input type="file" id="questionImageInput" accept="image/*">
+      <button id="createQuizBtn">Create Quiz</button>
+    </div>
+    <div id="adminQuizControls" style="display:none;">
+      <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem;">Answer Sheet</h4>
+      <div class="admin-row">
+        <input type="file" id="answerImageInput" accept="image/*">
+        <button id="uploadAnswersBtn">Upload Answers</button>
+      </div>
+      <div class="admin-row">
+        <button id="lockQuizBtn">Lock & Archive</button>
+        <button id="unlockQuizBtn" style="display:none;">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile image toggle -->
+  <button class="mobile-image-toggle" id="mobileImageToggle" style="display:none;">
+    Show/Hide Questions
+  </button>
+
+  <!-- Main content -->
+  <div id="mainContent" style="display:none;">
+    <div class="split-pane">
+      <div class="image-pane" id="imagePane">
+        <div class="quiz-title" id="quizTitleDisplay"></div>
+        <div class="image-label">Questions</div>
+        <img id="questionImage" src="" alt="Quiz questions" style="display:none;">
+        <button class="answer-toggle-btn" id="answerImageToggle" style="display:none;">Show Answers</button>
+        <div id="answerImageSection" style="display:none;">
+          <div class="image-label">Answers</div>
+          <img id="answerImage" src="" alt="Quiz answers">
+        </div>
+      </div>
+      <div class="answers-pane" id="answersPane">
+        <div class="score-bar" id="scoreBar" style="display:none;">
+          <span>Group Score</span>
+          <span class="score" id="scoreValue">-</span>
+        </div>
+        <button class="save-all-btn" id="saveAllBtn" onclick="saveAllAnswers()">Save my answers</button>
+        <div class="legend">
+          <span class="legend-item"><span class="confidence-badge confidence-guess">g</span> guess</span>
+          <span class="legend-item"><span class="confidence-badge confidence-maybe">m</span> maybe</span>
+          <span class="legend-item"><span class="confidence-badge confidence-certain">c</span> certain</span>
+          <span class="legend-item"><span class="legend-vote" style="color: var(--success);">&#9650;</span> agree</span>
+          <span class="legend-item"><span class="legend-vote" style="color: var(--danger);">&#9660;</span> disagree</span>
+        </div>
+        <div class="mobile-slider" id="mobileSlider" style="display:none;">
+          <button class="slider-btn" id="sliderLeft">&#9664;</button>
+          <span class="slider-label" id="sliderLabel"></span>
+          <button class="slider-btn" id="sliderRight">&#9654;</button>
+        </div>
+        <div id="questionsContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No quiz state -->
+  <div id="noQuiz" class="no-quiz" style="display:none;">
+    <h2>No active quiz</h2>
+    <p>Check back later, or ask your admin to create one.</p>
+  </div>
+
+  <!-- Locked banner -->
+  <div id="lockedBanner" class="locked-banner" style="display:none;">
+    This quiz is archived (read-only)
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/quiz.js"></script>
+</body>
+</html>
