@@ -1,6 +1,6 @@
 {
   "name": "triviaforce",
-  "version": "1.0.0",
+  "version": "0.8.0",
   "description": "Collaborative weekly trivia quiz app",
   "main": "server.js",
   "scripts": {

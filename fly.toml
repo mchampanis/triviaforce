@@ -1,0 +1,30 @@
+app = "triviaforce"
+primary_region = "ams"
+
+[build]
+
+[env]
+  DATABASE_PATH = "/data/triviaforce.db"
+  UPLOAD_DIR = "/data/uploads"
+
+[[mounts]]
+  source = "triviaforce_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "get"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
