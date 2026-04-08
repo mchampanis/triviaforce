@@ -104,7 +104,7 @@ function initTheme() {
 
 function updateThemeButton(btn) {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  btn.textContent = isDark ? 'Light Theme' : 'Dark Theme';
+  btn.textContent = isDark ? 'Light' : 'Dark';
 }
 
 document.addEventListener('DOMContentLoaded', initTheme);
