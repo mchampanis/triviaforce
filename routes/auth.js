@@ -1,7 +1,7 @@
 const express = require('express');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 const db = require('../db');
-const { parseCookies, requirePassphrase, resolveUser, safeEqual } = require('../middleware/identity');
+const { parseCookies, requirePassphrase, resolveUser, safeEqual, passphraseToken } = require('../middleware/identity');
 
 const router = express.Router();
 
@@ -19,8 +19,9 @@ router.post('/passphrase', (req, res) => {
   if (typeof passphrase !== 'string' || !safeEqual(passphrase, expected)) {
     return res.status(401).json({ error: 'Wrong passphrase' });
   }
-  // Set passphrase cookie (long-lived, httpOnly)
-  res.setHeader('Set-Cookie', `tf_passphrase=${encodeURIComponent(expected)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${COOKIE_SUFFIX}`);
+  // Set passphrase cookie to an HMAC-derived token, not the raw passphrase.
+  // requirePassphrase recomputes the same token and compares constant-time.
+  res.setHeader('Set-Cookie', `tf_passphrase=${passphraseToken()}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${COOKIE_SUFFIX}`);
   res.json({ ok: true });
 });
 
@@ -57,7 +58,7 @@ router.post('/identify', requirePassphrase, resolveUser, (req, res) => {
   }
 
   // Create new user
-  const token = uuidv4();
+  const token = crypto.randomUUID();
   const result = db.prepare(
     'INSERT INTO users (display_name, fingerprint, cookie_token) VALUES (?, ?, ?)'
   ).run(displayName.trim(), fingerprint || null, token);

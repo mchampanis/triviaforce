@@ -43,8 +43,9 @@ app.use('/uploads', express.static(uploadDir));
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/admin', require('./routes/admin'));
-app.use('/api/quiz', require('./routes/quiz'));
-app.use('/api/quizzes', require('./routes/quiz').listRouter);
+const quizRoutes = require('./routes/quiz');
+app.use('/api/quiz', quizRoutes.router);
+app.use('/api/quizzes', quizRoutes.listRouter);
 app.use('/api/answers', require('./routes/answers'));
 app.use('/api/votes', require('./routes/votes'));
 app.use('/api/consensus', require('./routes/consensus'));
