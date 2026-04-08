@@ -29,14 +29,10 @@ node server.js
 
 The server reads config from `.env`. See `.env.example` for available options.
 
-## Deployment (sprites.dev)
+## Deployment
 
-```bash
-npm install --production
-cp .env.example .env   # edit with production passwords
-mkdir -p data uploads
-node server.js          # or use pm2: pm2 start server.js --name triviaforce
-```
+Deployed to Fly.io as a single machine in `ams` with a mounted volume at
+`/data`. See `DEPLOY.md` for the full setup and day-to-day commands.
 
 ## License
 

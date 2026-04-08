@@ -47,7 +47,7 @@ router.post('/quiz', requirePassphrase, requireAdmin, upload.single('questionIma
   // Move image to quiz-specific directory
   const quizDir = path.join(uploadDir, String(quizId));
   fs.mkdirSync(quizDir, { recursive: true });
-  const filename = `questions${path.extname(req.file.originalname).toLowerCase()}`;
+  const filename = `questions${path.extname(req.file.originalname).toLowerCase() || '.jpg'}`;
   fs.renameSync(req.file.path, path.join(quizDir, filename));
 
   db.prepare('UPDATE quizzes SET question_image = ? WHERE id = ?').run(filename, quizId);
@@ -67,7 +67,7 @@ router.post('/quiz/:id/answers-image', requirePassphrase, requireAdmin, upload.s
 
   const quizDir = path.join(uploadDir, String(quiz.id));
   fs.mkdirSync(quizDir, { recursive: true });
-  const filename = `answers${path.extname(req.file.originalname).toLowerCase()}`;
+  const filename = `answers${path.extname(req.file.originalname).toLowerCase() || '.jpg'}`;
   fs.renameSync(req.file.path, path.join(quizDir, filename));
 
   db.prepare('UPDATE quizzes SET answer_image = ? WHERE id = ?').run(filename, quiz.id);

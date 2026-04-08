@@ -10,6 +10,15 @@ function safeEqual(a, b) {
   return crypto.timingSafeEqual(ab, bb);
 }
 
+// Opaque token derived from PASSPHRASE via HMAC. Stored in the auth cookie
+// instead of the raw passphrase, so cookie disclosure does not reveal it.
+// Stateless: every process computes the same value, no DB needed. Rotating
+// PASSPHRASE invalidates all existing sessions automatically.
+function passphraseToken() {
+  const secret = process.env.PASSPHRASE || '';
+  return crypto.createHmac('sha256', secret).update('tf_passphrase_v1').digest('hex');
+}
+
 // Parse cookies from header (no dependency needed for this simple case)
 function parseCookies(header) {
   const cookies = {};
@@ -24,11 +33,10 @@ function parseCookies(header) {
 // Middleware: require valid passphrase cookie
 function requirePassphrase(req, res, next) {
   const cookies = parseCookies(req.headers.cookie);
-  const passphrase = process.env.PASSPHRASE;
-  if (!passphrase) {
+  if (!process.env.PASSPHRASE) {
     return res.status(500).json({ error: 'Server misconfigured: no passphrase set' });
   }
-  if (!safeEqual(cookies.tf_passphrase, passphrase)) {
+  if (!safeEqual(cookies.tf_passphrase, passphraseToken())) {
     return res.status(401).json({ error: 'Invalid or missing passphrase' });
   }
   next();
@@ -68,4 +76,4 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = { parseCookies, requirePassphrase, resolveUser, requireUser, requireAdmin, safeEqual };
+module.exports = { parseCookies, requirePassphrase, resolveUser, requireUser, requireAdmin, safeEqual, passphraseToken };

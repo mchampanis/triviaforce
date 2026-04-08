@@ -59,5 +59,4 @@ listRouter.get('/', requirePassphrase, (req, res) => {
   res.json({ quizzes: result });
 });
 
-module.exports = router;
-module.exports.listRouter = listRouter;
+module.exports = { router, listRouter };
