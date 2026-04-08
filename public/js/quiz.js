@@ -95,7 +95,7 @@ function showIdentifyModal() {
   const submit = document.getElementById('identifySubmit');
   const error = document.getElementById('identifyError');
 
-  async function doSubmit() {
+  async function doSubmit(claim) {
     const name = input.value.trim();
     if (!name) {
       error.textContent = 'Please enter a name';
@@ -105,8 +105,21 @@ function showIdentifyModal() {
     try {
       const data = await apiFetch('/api/auth/identify', {
         method: 'POST',
-        body: JSON.stringify({ displayName: name, fingerprint: getFingerprint() })
+        body: JSON.stringify({ displayName: name, fingerprint: getFingerprint(), claim: !!claim })
       });
+      // Server is asking us to confirm before adopting an existing identity.
+      if (data.needsClaim) {
+        const ok = confirm(
+          `Someone called "${data.displayName}" is already in this quiz. ` +
+          `Is that you?\n\n` +
+          `OK = continue as that user (your answers from your other device will appear here).\n` +
+          `Cancel = pick a different name.`
+        );
+        if (ok) {
+          return doSubmit(true);
+        }
+        return;
+      }
       currentUser = { id: data.userId, displayName: data.displayName };
       overlay.remove();
       await loadQuiz();

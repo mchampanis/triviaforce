@@ -1,7 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const db = require('../db');
-const { parseCookies, requirePassphrase, resolveUser, safeEqual, passphraseToken } = require('../middleware/identity');
+const { requirePassphrase, resolveUser, safeEqual, passphraseToken } = require('../middleware/identity');
 
 const router = express.Router();
 
@@ -27,21 +27,19 @@ router.post('/passphrase', (req, res) => {
 
 // Identify user (set display name). Requires passphrase.
 router.post('/identify', requirePassphrase, resolveUser, (req, res) => {
-  const { displayName, fingerprint } = req.body;
+  const { displayName, fingerprint, claim } = req.body;
   if (!displayName || !displayName.trim()) {
     return res.status(400).json({ error: 'Display name required' });
   }
-
-  const cookies = parseCookies(req.headers.cookie);
-  const existingToken = cookies.tf_token;
+  const name = displayName.trim();
 
   // Check if user already exists by token
   if (req.user) {
     // Update display name if changed
-    if (req.user.display_name !== displayName.trim()) {
-      db.prepare('UPDATE users SET display_name = ? WHERE id = ?').run(displayName.trim(), req.user.id);
+    if (req.user.display_name !== name) {
+      db.prepare('UPDATE users SET display_name = ? WHERE id = ?').run(name, req.user.id);
     }
-    return res.json({ userId: req.user.id, displayName: displayName.trim() });
+    return res.json({ userId: req.user.id, displayName: name });
   }
 
   // Check if user exists by fingerprint
@@ -50,21 +48,40 @@ router.post('/identify', requirePassphrase, resolveUser, (req, res) => {
     if (existing) {
       // Re-set their cookie
       res.setHeader('Set-Cookie', `tf_token=${existing.cookie_token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${COOKIE_SUFFIX}`);
-      if (existing.display_name !== displayName.trim()) {
-        db.prepare('UPDATE users SET display_name = ? WHERE id = ?').run(displayName.trim(), existing.id);
+      if (existing.display_name !== name) {
+        db.prepare('UPDATE users SET display_name = ? WHERE id = ?').run(name, existing.id);
       }
-      return res.json({ userId: existing.id, displayName: displayName.trim() });
+      return res.json({ userId: existing.id, displayName: name });
     }
+  }
+
+  // Check if a user with this display name already exists (case-insensitive).
+  // This handles the "started on desktop, switched to phone" case where the
+  // second device has no shared cookie or fingerprint with the first.
+  const nameMatch = db.prepare(
+    'SELECT id, display_name, cookie_token FROM users WHERE LOWER(display_name) = LOWER(?)'
+  ).get(name);
+  if (nameMatch) {
+    if (!claim) {
+      // Ask the frontend to confirm with the user before adopting the identity.
+      return res.json({ needsClaim: true, displayName: nameMatch.display_name });
+    }
+    // User confirmed -- adopt the existing identity on this device.
+    res.setHeader('Set-Cookie', `tf_token=${nameMatch.cookie_token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${COOKIE_SUFFIX}`);
+    if (fingerprint) {
+      db.prepare('UPDATE users SET fingerprint = ? WHERE id = ?').run(fingerprint, nameMatch.id);
+    }
+    return res.json({ userId: nameMatch.id, displayName: nameMatch.display_name });
   }
 
   // Create new user
   const token = crypto.randomUUID();
   const result = db.prepare(
     'INSERT INTO users (display_name, fingerprint, cookie_token) VALUES (?, ?, ?)'
-  ).run(displayName.trim(), fingerprint || null, token);
+  ).run(name, fingerprint || null, token);
 
   res.setHeader('Set-Cookie', `tf_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${COOKIE_SUFFIX}`);
-  res.json({ userId: result.lastInsertRowid, displayName: displayName.trim() });
+  res.json({ userId: result.lastInsertRowid, displayName: name });
 });
 
 // Check current auth status
