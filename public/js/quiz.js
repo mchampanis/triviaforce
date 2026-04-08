@@ -383,7 +383,7 @@ function renderAnswerGrid(answers) {
             <input id="input-${q}" value="${escapeHtml(useValue)}"
               placeholder="..." oninput="dirtyInputs.add(${q})" onchange="submitAnswer(${q})"
               onblur="this.scrollLeft=0; this.setSelectionRange(0,0)">
-            <select class="confidence-select conf-${useConf}" id="confidence-${q}" onchange="updateConfStyle(this); this.blur(); submitAnswer(${q})" title="How confident are you?">
+            <select class="confidence-select conf-${useConf}" id="confidence-${q}" tabindex="-1" onchange="updateConfStyle(this); this.blur(); submitAnswer(${q})" title="How confident are you?">
               <option value="guess" ${useConf === 'guess' ? 'selected' : ''}>guess</option>
               <option value="maybe" ${useConf === 'maybe' ? 'selected' : ''}>maybe</option>
               <option value="certain" ${useConf === 'certain' ? 'selected' : ''}>certain</option>
@@ -394,10 +394,10 @@ function renderAnswerGrid(answers) {
         // Read-only cell with answer, confidence badge, and vote controls
         const voteHtml = !isMe && !currentQuiz.locked ? `
           <div class="vote-controls">
-            <button class="vote-btn ${a.userVote === 1 ? 'active-up' : ''}"
+            <button class="vote-btn ${a.userVote === 1 ? 'active-up' : ''}" tabindex="-1"
               onclick="vote(${a.id}, 1)" title="Agree">&#9650;</button>
             <span class="vote-score">${a.vote_score > 0 ? '+' : ''}${a.vote_score}</span>
-            <button class="vote-btn ${a.userVote === -1 ? 'active-down' : ''}"
+            <button class="vote-btn ${a.userVote === -1 ? 'active-down' : ''}" tabindex="-1"
               onclick="vote(${a.id}, -1)" title="Disagree">&#9660;</button>
           </div>
         ` : (a.vote_score !== 0 ? `<span class="vote-score">${a.vote_score > 0 ? '+' : ''}${a.vote_score}</span>` : '');
@@ -422,11 +422,11 @@ function renderAnswerGrid(answers) {
     consensusTd.id = `consensus-cell-${q}`;
     consensusTd.innerHTML = `
       <div class="consensus-cell" id="consensus-row-${q}">
-        <input class="consensus-input" id="consensus-input-${q}" placeholder="..."
+        <input class="consensus-input" id="consensus-input-${q}" placeholder="..." tabindex="-1"
           onchange="updateConsensus(${q}, this.value)" ${currentQuiz.locked ? 'disabled' : ''}>
         <div class="mark-buttons" id="mark-buttons-${q}" style="display:none;">
-          <button class="mark-btn" id="mark-correct-${q}" onclick="markAnswer(${q}, true)">&#10003;</button>
-          <button class="mark-btn" id="mark-incorrect-${q}" onclick="markAnswer(${q}, false)">&#10007;</button>
+          <button class="mark-btn" id="mark-correct-${q}" tabindex="-1" onclick="markAnswer(${q}, true)">&#10003;</button>
+          <button class="mark-btn" id="mark-incorrect-${q}" tabindex="-1" onclick="markAnswer(${q}, false)">&#10007;</button>
         </div>
       </div>
     `;
