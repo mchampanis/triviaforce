@@ -1,8 +1,6 @@
 app = "triviaforce"
 primary_region = "ams"
 
-[build]
-
 [env]
   DATABASE_PATH = "/data/triviaforce.db"
   UPLOAD_DIR = "/data/uploads"

@@ -49,7 +49,7 @@ app.use('/api/answers', require('./routes/answers'));
 app.use('/api/votes', require('./routes/votes'));
 app.use('/api/consensus', require('./routes/consensus'));
 
-// SPA-style fallback: serve index.html for non-API, non-static routes
+// Pretty URL for the archive page
 app.get('/archive', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'archive.html'));
 });
