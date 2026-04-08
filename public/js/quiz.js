@@ -271,6 +271,14 @@ async function refreshAnswers() {
   if (dirtyInputs.size > 0) {
     return;
   }
+  // Skip re-render if the user is interacting with an input or the
+  // confidence dropdown inside the grid -- rebuilding the table would
+  // yank focus and close the open select on both desktop and mobile.
+  const active = document.activeElement;
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'SELECT')
+      && active.closest('#answerGrid')) {
+    return;
+  }
   try {
     const data = await apiFetch(`/api/answers/quiz/${currentQuiz.id}`);
     renderAnswerGrid(data.answers);
