@@ -1,4 +1,14 @@
+const crypto = require('crypto');
 const db = require('../db');
+
+// Constant-time string comparison; safe for length-mismatched inputs.
+function safeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ab.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ab, bb);
+}
 
 // Parse cookies from header (no dependency needed for this simple case)
 function parseCookies(header) {
@@ -18,7 +28,7 @@ function requirePassphrase(req, res, next) {
   if (!passphrase) {
     return res.status(500).json({ error: 'Server misconfigured: no passphrase set' });
   }
-  if (cookies.tf_passphrase !== passphrase) {
+  if (!safeEqual(cookies.tf_passphrase, passphrase)) {
     return res.status(401).json({ error: 'Invalid or missing passphrase' });
   }
   next();
@@ -52,10 +62,10 @@ function requireAdmin(req, res, next) {
     return res.status(500).json({ error: 'Server misconfigured: no admin password set' });
   }
   const provided = req.headers['x-admin-key'];
-  if (provided !== adminPassword) {
+  if (typeof provided !== 'string' || !safeEqual(provided, adminPassword)) {
     return res.status(403).json({ error: 'Invalid admin password' });
   }
   next();
 }
 
-module.exports = { parseCookies, requirePassphrase, resolveUser, requireUser, requireAdmin };
+module.exports = { parseCookies, requirePassphrase, resolveUser, requireUser, requireAdmin, safeEqual };

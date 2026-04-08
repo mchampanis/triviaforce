@@ -8,7 +8,7 @@ Collaborative weekly trivia quiz app for a small group of friends (5-6 people).
 - better-sqlite3 (synchronous SQLite)
 - multer for image uploads
 - Vanilla JS frontend (no framework, no build step)
-- Hosted on sprites.dev (persistent Linux VM)
+- Hosted on Fly.io (single machine in `ams`, mounted volume at `/data`); see `DEPLOY.md`
 
 ## Project Structure
 

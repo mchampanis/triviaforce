@@ -437,8 +437,11 @@ function initMobileSlider(participantIds, participantMap) {
   if (!slider || participantIds.length === 0) return;
   slider.style.display = 'flex';
 
+  // Slider has one slot per participant plus a final "Consensus" slot.
+  const totalSlots = participantIds.length + 1;
+
   // Clamp index to valid range (participants may have changed between polls)
-  if (mobileSliderIndex >= participantIds.length) {
+  if (mobileSliderIndex >= totalSlots) {
     mobileSliderIndex = 0;
   }
 
@@ -448,11 +451,13 @@ function initMobileSlider(participantIds, participantMap) {
     mobileSliderInitialized = true;
 
     document.getElementById('sliderLeft').onclick = () => {
-      mobileSliderIndex = (mobileSliderIndex - 1 + knownParticipants.length) % knownParticipants.length;
+      const total = knownParticipants.length + 1;
+      mobileSliderIndex = (mobileSliderIndex - 1 + total) % total;
       updateMobileSlider(knownParticipants, getCurrentParticipantMap());
     };
     document.getElementById('sliderRight').onclick = () => {
-      mobileSliderIndex = (mobileSliderIndex + 1) % knownParticipants.length;
+      const total = knownParticipants.length + 1;
+      mobileSliderIndex = (mobileSliderIndex + 1) % total;
       updateMobileSlider(knownParticipants, getCurrentParticipantMap());
     };
   }
@@ -461,19 +466,29 @@ function initMobileSlider(participantIds, participantMap) {
 }
 
 function updateMobileSlider(participantIds, participantMap) {
-  const label = document.getElementById('sliderLabel');
-  label.textContent = `${participantMap[participantIds[mobileSliderIndex]]} (${mobileSliderIndex + 1}/${participantIds.length})`;
+  const totalSlots = participantIds.length + 1;
+  const isConsensusSlot = mobileSliderIndex === participantIds.length;
 
-  // Hide all participant columns, show only the selected one
+  const label = document.getElementById('sliderLabel');
+  if (isConsensusSlot) {
+    label.textContent = `Consensus (${totalSlots}/${totalSlots})`;
+  } else {
+    label.textContent = `${participantMap[participantIds[mobileSliderIndex]]} (${mobileSliderIndex + 1}/${totalSlots})`;
+  }
+
+  // Show one column at a time: a participant column, or the consensus column
+  // when on the final slot. Everything else is hidden.
   const table = document.getElementById('answerGrid');
   if (!table) return;
 
   const allRows = table.querySelectorAll('tr');
   allRows.forEach(row => {
-    const cells = row.querySelectorAll('.col-participant');
-    cells.forEach((cell, i) => {
-      cell.style.display = i === mobileSliderIndex ? '' : 'none';
+    const pCells = row.querySelectorAll('.col-participant');
+    pCells.forEach((cell, i) => {
+      cell.style.display = (!isConsensusSlot && i === mobileSliderIndex) ? '' : 'none';
     });
+    const cCell = row.querySelector('.col-consensus');
+    if (cCell) cCell.style.display = isConsensusSlot ? '' : 'none';
   });
 }
 

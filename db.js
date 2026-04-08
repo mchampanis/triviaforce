@@ -2,10 +2,10 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-const dbDir = path.join(__dirname, 'data');
-fs.mkdirSync(dbDir, { recursive: true });
-
-const dbPath = process.env.DATABASE_PATH || path.join(dbDir, 'triviaforce.db');
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'data', 'triviaforce.db');
+// Make sure the parent directory exists (works for both the default ./data
+// and a mounted volume like /data when running in a container).
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 const db = new Database(dbPath);
 
 // Enable WAL mode for better concurrent read performance
