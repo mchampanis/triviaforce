@@ -48,10 +48,10 @@ fly secrets set ADMIN_PASSWORD='...' PASSPHRASE='...'
 ### 4. First deploy
 
 ```
-fly deploy
+npm run deploy
 ```
 
-This builds the Docker image, pushes it to Fly's registry, provisions one
+This writes the current commit hash to a `COMMIT` file, then builds the Docker image, pushes it to Fly's registry, provisions one
 machine in `ams`, attaches the volume at `/data`, and starts the app.
 
 Verify:
@@ -59,7 +59,7 @@ Verify:
 ```
 fly status
 fly logs
-curl https://triviaforce.fly.dev/api/health
+npm run deploy:check   # should include "commit":"<sha>"
 ```
 
 ### 5. Custom domain
@@ -90,7 +90,8 @@ visit `https://<subdomain>.<your-domain>`.
 
 | Task | Command |
 |------|---------|
-| Deploy latest code | `fly deploy` |
+| Deploy latest code | `npm run deploy` |
+| Check deployed commit | `npm run deploy:check` |
 | Tail logs | `fly logs` |
 | Open a shell on the VM | `fly ssh console` |
 | Inspect the database | `fly ssh console -C "sqlite3 /data/triviaforce.db"` |

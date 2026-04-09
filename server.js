@@ -55,8 +55,13 @@ app.get('/archive', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'archive.html'));
 });
 
+const COMMIT = (() => {
+  try { return fs.readFileSync(path.join(__dirname, 'COMMIT'), 'utf8').trim(); }
+  catch { return 'unknown'; }
+})();
+
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', commit: COMMIT });
 });
 
 app.listen(PORT, '0.0.0.0', () => {

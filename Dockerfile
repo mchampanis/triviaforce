@@ -18,7 +18,7 @@ WORKDIR /app
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY package.json ./
-COPY server.js db.js ./
+COPY server.js db.js COMMIT* ./
 COPY routes ./routes
 COPY middleware ./middleware
 COPY public ./public

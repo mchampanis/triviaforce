@@ -4,7 +4,9 @@
   "description": "Collaborative weekly trivia quiz app",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "deploy": "git rev-parse --short HEAD > COMMIT && fly deploy",
+    "deploy:check": "curl -s https://REDACTED/api/health"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",
