@@ -36,7 +36,7 @@ router.get('/quiz/:id', requirePassphrase, (req, res) => {
     LEFT JOIN votes v ON v.answer_id = a.id
     WHERE a.quiz_id = ?
     GROUP BY a.id
-    ORDER BY a.question_number, confidence_rank DESC, vote_score DESC
+    ORDER BY a.question_number, confidence_rank DESC, vote_score DESC, a.id ASC
   `).all(req.params.id);
 
   // Pick top answer per question only if there's a clear winner

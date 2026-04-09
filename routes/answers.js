@@ -21,7 +21,7 @@ router.get('/quiz/:id', requirePassphrase, resolveUser, (req, res) => {
     LEFT JOIN votes v ON v.answer_id = a.id
     WHERE a.quiz_id = ?
     GROUP BY a.id
-    ORDER BY a.question_number, a.updated_at
+    ORDER BY a.question_number, a.updated_at, a.id
   `).all(req.params.id);
 
   // Get current user's votes so we can show their vote state
