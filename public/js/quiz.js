@@ -33,12 +33,12 @@ async function init() {
 
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(() => {
+  pollTimer = setInterval(async () => {
     if (currentQuiz) {
-      refreshAnswers();
+      await refreshAnswers();
       refreshConsensus();
     }
-  }, 10000);
+  }, 5000);
 }
 
 // ---- Modals ----
@@ -147,7 +147,7 @@ async function loadQuiz() {
       return;
     }
     currentQuiz = data.quiz;
-    renderQuiz();
+    await renderQuiz();
   } catch (e) {
     showToast(e.message, 'error');
   }
@@ -157,7 +157,7 @@ async function loadSpecificQuiz(id) {
   try {
     const data = await apiFetch(`/api/quiz/${id}`);
     currentQuiz = data.quiz;
-    renderQuiz();
+    await renderQuiz();
   } catch (e) {
     showToast(e.message, 'error');
     document.getElementById('noQuiz').style.display = 'block';
@@ -166,7 +166,7 @@ async function loadSpecificQuiz(id) {
   }
 }
 
-function renderQuiz() {
+async function renderQuiz() {
   document.getElementById('noQuiz').style.display = 'none';
   document.getElementById('mainContent').style.display = 'block';
 
@@ -228,7 +228,8 @@ function renderQuiz() {
   buildAnswerGrid();
 
   // Load data (this populates columns and cells)
-  refreshAnswers();
+  // Consensus auto-pick depends on answer data, so refresh sequentially
+  await refreshAnswers();
   refreshConsensus();
 
   // Admin controls
