@@ -81,18 +81,42 @@ router.get('/quiz/:id', requirePassphrase, (req, res) => {
   }
 
   for (const [qn, answers] of Object.entries(grouped)) {
-    if (answers.length === 1) {
-      autoConsensus[qn] = answers[0].text;
-    } else if (answers.length > 1) {
-      const top = answers[0];
-      const second = answers[1];
-      // If top answers are similar (fuzzy match), pick the first
-      if (isSimilar(top.text, second.text)) {
-        autoConsensus[qn] = top.text;
-      // Otherwise, only auto-fill if there's a clear winner
-      } else if (top.confidence_rank > second.confidence_rank || top.vote_score > second.vote_score) {
-        autoConsensus[qn] = top.text;
-      }
+    if (answers.length === 0) continue;
+
+    // Cluster answers by fuzzy similarity. The SQL above already orders
+    // answers within a question by (confidence_rank DESC, vote_score DESC,
+    // id ASC), so the first member added to any cluster is that cluster's
+    // best-ranked representative.
+    const clusters = [];
+    for (const a of answers) {
+      const match = clusters.find(c => c.some(m => isSimilar(m.text, a.text)));
+      if (match) match.push(a);
+      else clusters.push([a]);
+    }
+
+    // Score clusters: bigger group wins, then highest confidence in the
+    // group, then total vote score across the group.
+    const scored = clusters.map(c => ({
+      members: c,
+      size: c.length,
+      maxConfidence: Math.max(...c.map(m => m.confidence_rank)),
+      sumVotes: c.reduce((s, m) => s + m.vote_score, 0)
+    }));
+    scored.sort((x, y) =>
+      y.size - x.size ||
+      y.maxConfidence - x.maxConfidence ||
+      y.sumVotes - x.sumVotes
+    );
+
+    const top = scored[0];
+    const second = scored[1];
+    // Only auto-fill if the top cluster strictly beats the runner-up on
+    // at least one axis. Full tie = no clear winner, leave blank.
+    if (!second ||
+        top.size > second.size ||
+        top.maxConfidence > second.maxConfidence ||
+        top.sumVotes > second.sumVotes) {
+      autoConsensus[qn] = top.members[0].text;
     }
   }
 
