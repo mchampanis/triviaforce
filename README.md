@@ -2,6 +2,8 @@
 
 Collaborative weekly trivia quiz app for small groups. Upload a quiz image, have your team submit and discuss answers, vote on the best ones, then self-mark when answers are revealed.
 
+![TriviaForce screenshot](assets/screenshot.png)
+
 ## Features
 
 - Upload weekly quiz question images
@@ -31,9 +33,9 @@ The server reads config from `.env`. See `.env.example` for available options.
 
 ## Deployment
 
-Deployed to Fly.io as a single machine in `ams` with a mounted volume at
+Can be deployed to Fly.io as a single machine with a mounted volume at
 `/data`. See `DEPLOY.md` for the full setup and day-to-day commands.
 
 ## License
 
-MIT - Michael Champanis
+MIT
