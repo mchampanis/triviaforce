@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "deploy": "git rev-parse --short HEAD > COMMIT && fly deploy",
-    "deploy:check": "node -e \"fetch('https://REDACTED/api/health').then(r=>r.json()).then(d=>console.log(JSON.stringify(d,null,2)))\""
+    "deploy:check": "node scripts/deploy-check.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",
