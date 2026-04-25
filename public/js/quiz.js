@@ -709,6 +709,7 @@ async function setupAdmin(quiz) {
   const panel = document.getElementById('adminPanel');
   const toggle = document.getElementById('adminToggle');
   const controls = document.getElementById('adminQuizControls');
+  const status = document.getElementById('adminStatus');
 
   toggle.onclick = () => {
     panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
@@ -725,6 +726,22 @@ async function setupAdmin(quiz) {
     }
   } else {
     controls.style.display = 'none';
+  }
+
+  if (status) {
+    if (!quiz) {
+      status.textContent = '';
+      status.className = 'admin-status';
+    } else if (quiz.locked) {
+      status.textContent = quiz.score != null ? `Locked - ${quiz.score}/20` : 'Locked';
+      status.className = 'admin-status status-locked';
+    } else if (quiz.answer_image) {
+      status.textContent = 'Marking';
+      status.className = 'admin-status status-marking';
+    } else {
+      status.textContent = 'Open';
+      status.className = 'admin-status status-open';
+    }
   }
 
   // Auto-fill quiz title
@@ -791,12 +808,13 @@ async function lockQuiz() {
   if (!password) return showToast('Admin password required', 'error');
 
   try {
-    const data = await apiFetch(`/api/admin/quiz/${currentQuiz.id}/lock`, {
+    const id = currentQuiz.id;
+    const data = await apiFetch(`/api/admin/quiz/${id}/lock`, {
       method: 'POST',
       headers: { 'X-Admin-Key': password }
     });
     showToast(`Quiz locked! Score: ${data.score}/20`, 'success');
-    await loadQuiz();
+    await loadSpecificQuiz(id);
   } catch (e) {
     showToast(e.message, 'error');
   }
@@ -807,12 +825,13 @@ async function unlockQuiz() {
   if (!password) return showToast('Admin password required', 'error');
 
   try {
-    await apiFetch(`/api/admin/quiz/${currentQuiz.id}/unlock`, {
+    const id = currentQuiz.id;
+    await apiFetch(`/api/admin/quiz/${id}/unlock`, {
       method: 'POST',
       headers: { 'X-Admin-Key': password }
     });
     showToast('Quiz unlocked', 'success');
-    await loadQuiz();
+    await loadSpecificQuiz(id);
   } catch (e) {
     showToast(e.message, 'error');
   }

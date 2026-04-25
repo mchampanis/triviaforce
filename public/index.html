@@ -19,7 +19,10 @@
 
   <!-- Admin panel (hidden by default) -->
   <div id="adminPanel" class="admin-panel" style="display:none; margin: 1rem;">
-    <h3>Admin</h3>
+    <div class="admin-header">
+      <h3>Admin</h3>
+      <span id="adminStatus" class="admin-status"></span>
+    </div>
     <div class="admin-row">
       <input type="password" id="adminPassword" placeholder="Admin password">
     </div>
@@ -36,8 +39,8 @@
         <button id="uploadAnswersBtn">Upload Answers</button>
       </div>
       <div class="admin-row">
-        <button id="lockQuizBtn">Lock & Archive</button>
-        <button id="unlockQuizBtn" style="display:none;">Unlock</button>
+        <button id="lockQuizBtn" class="btn-state-open">Lock & Archive</button>
+        <button id="unlockQuizBtn" class="btn-state-locked" style="display:none;">Unlock</button>
         <button id="deleteQuizBtn" class="btn-danger">Delete Quiz</button>
       </div>
     </div>

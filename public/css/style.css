@@ -595,6 +595,66 @@ th.col-consensus {
   filter: brightness(1.1);
 }
 
+/* Lock/Unlock buttons colored by current quiz state, not the action they
+   perform — at a glance the visible button tells you whether the quiz is
+   open (green) or locked (amber). */
+.admin-panel button.btn-state-open {
+  background: var(--success);
+}
+
+.admin-panel button.btn-state-open:hover {
+  background: var(--success);
+  filter: brightness(1.1);
+}
+
+.admin-panel button.btn-state-locked {
+  background: var(--warning);
+}
+
+.admin-panel button.btn-state-locked:hover {
+  background: var(--warning);
+  filter: brightness(1.1);
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.admin-header h3 {
+  margin: 0;
+}
+
+.admin-status {
+  font-size: 0.8rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--guess-bg);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.admin-status:empty {
+  display: none;
+}
+
+.admin-status.status-locked {
+  background: var(--maybe-bg);
+  color: var(--maybe-text);
+}
+
+.admin-status.status-marking {
+  background: var(--certain-bg);
+  color: var(--certain-text);
+}
+
+.admin-status.status-open {
+  background: var(--consensus-bg);
+  color: var(--primary);
+}
+
 .admin-panel .admin-row {
   display: flex;
   gap: 0.5rem;
