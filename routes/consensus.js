@@ -212,6 +212,13 @@ router.put('/quiz/:id/:questionNumber/mark', requirePassphrase, resolveUser, req
     DO UPDATE SET is_correct = excluded.is_correct
   `).run(req.params.id, qn, text, isCorrectVal, req.user.id);
 
+  // Keep quizzes.score in sync with consensus marks. Lock used to be the only
+  // place this got computed, so marking after lock left the archive stale.
+  const { score } = db.prepare(
+    'SELECT COALESCE(SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END), 0) AS score FROM consensus WHERE quiz_id = ?'
+  ).get(req.params.id);
+  db.prepare('UPDATE quizzes SET score = ? WHERE id = ?').run(score, req.params.id);
+
   res.json({ ok: true });
 });
 

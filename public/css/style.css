@@ -586,6 +586,15 @@ th.col-consensus {
   background: var(--primary-hover);
 }
 
+.admin-panel button.btn-danger {
+  background: var(--danger);
+}
+
+.admin-panel button.btn-danger:hover {
+  background: var(--danger);
+  filter: brightness(1.1);
+}
+
 .admin-panel .admin-row {
   display: flex;
   gap: 0.5rem;

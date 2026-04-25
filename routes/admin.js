@@ -104,4 +104,29 @@ router.post('/quiz/:id/unlock', requirePassphrase, requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// Delete a quiz and everything attached to it. Schema has FK references
+// without ON DELETE CASCADE, so child rows are removed in order inside a
+// transaction. Upload directory is wiped after the txn commits.
+router.delete('/quiz/:id', requirePassphrase, requireAdmin, (req, res) => {
+  const quiz = db.prepare('SELECT * FROM quizzes WHERE id = ?').get(req.params.id);
+  if (!quiz) {
+    return res.status(404).json({ error: 'Quiz not found' });
+  }
+
+  const txn = db.transaction(() => {
+    db.prepare(
+      'DELETE FROM votes WHERE answer_id IN (SELECT id FROM answers WHERE quiz_id = ?)'
+    ).run(quiz.id);
+    db.prepare('DELETE FROM answers WHERE quiz_id = ?').run(quiz.id);
+    db.prepare('DELETE FROM consensus WHERE quiz_id = ?').run(quiz.id);
+    db.prepare('DELETE FROM quizzes WHERE id = ?').run(quiz.id);
+  });
+  txn();
+
+  const quizDir = path.join(uploadDir, String(quiz.id));
+  fs.rmSync(quizDir, { recursive: true, force: true });
+
+  res.json({ ok: true });
+});
+
 module.exports = router;

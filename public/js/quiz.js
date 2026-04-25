@@ -734,6 +734,7 @@ async function setupAdmin(quiz) {
   document.getElementById('uploadAnswersBtn').onclick = uploadAnswerImage;
   document.getElementById('lockQuizBtn').onclick = lockQuiz;
   document.getElementById('unlockQuizBtn').onclick = unlockQuiz;
+  document.getElementById('deleteQuizBtn').onclick = deleteQuiz;
 }
 
 async function createQuiz() {
@@ -811,6 +812,23 @@ async function unlockQuiz() {
       headers: { 'X-Admin-Key': password }
     });
     showToast('Quiz unlocked', 'success');
+    await loadQuiz();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+async function deleteQuiz() {
+  const password = document.getElementById('adminPassword').value;
+  if (!password) return showToast('Admin password required', 'error');
+  if (!confirm(`Delete "${currentQuiz.title}"? This removes all answers, votes, and consensus.`)) return;
+
+  try {
+    await apiFetch(`/api/admin/quiz/${currentQuiz.id}`, {
+      method: 'DELETE',
+      headers: { 'X-Admin-Key': password }
+    });
+    showToast('Quiz deleted', 'success');
     await loadQuiz();
   } catch (e) {
     showToast(e.message, 'error');
