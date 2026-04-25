@@ -194,23 +194,23 @@ router.put('/quiz/:id/:questionNumber/mark', requirePassphrase, resolveUser, req
     return res.status(400).json({ error: 'Invalid question number' });
   }
 
-  const { isCorrect } = req.body;
+  const { isCorrect, answerText } = req.body;
   if (isCorrect !== true && isCorrect !== false && isCorrect !== null) {
     return res.status(400).json({ error: 'isCorrect must be true, false, or null' });
   }
 
-  // Ensure consensus row exists first
-  const existing = db.prepare(
-    'SELECT * FROM consensus WHERE quiz_id = ? AND question_number = ?'
-  ).get(req.params.id, qn);
+  const isCorrectVal = isCorrect === null ? null : (isCorrect ? 1 : 0);
+  const text = (answerText || '').trim();
 
-  if (!existing) {
-    return res.status(400).json({ error: 'No consensus answer set for this question' });
-  }
-
-  db.prepare(
-    'UPDATE consensus SET is_correct = ? WHERE quiz_id = ? AND question_number = ?'
-  ).run(isCorrect === null ? null : (isCorrect ? 1 : 0), req.params.id, qn);
+  // Upsert: marking is the commit point for an auto-populated consensus.
+  // On insert, persist the text the user is marking. On conflict, only
+  // touch is_correct so we don't clobber a manually edited answer_text.
+  db.prepare(`
+    INSERT INTO consensus (quiz_id, question_number, answer_text, is_correct, set_by_user_id)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(quiz_id, question_number)
+    DO UPDATE SET is_correct = excluded.is_correct
+  `).run(req.params.id, qn, text, isCorrectVal, req.user.id);
 
   res.json({ ok: true });
 });

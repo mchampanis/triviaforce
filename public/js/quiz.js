@@ -640,6 +640,9 @@ function renderConsensus(consensus) {
 }
 
 async function updateConsensus(q, text) {
+  // Locked quiz: no-op. The PUT would 400 with "Quiz is locked"; marking is
+  // still allowed and goes through /mark, which upserts.
+  if (!currentQuiz || currentQuiz.locked) return;
   try {
     await apiFetch(`/api/consensus/quiz/${currentQuiz.id}/${q}`, {
       method: 'PUT',
@@ -652,12 +655,6 @@ async function updateConsensus(q, text) {
 }
 
 async function markAnswer(q, isCorrect) {
-  // First, ensure consensus exists (save current input value)
-  const input = document.getElementById(`consensus-input-${q}`);
-  if (input && input.value.trim()) {
-    await updateConsensus(q, input.value);
-  }
-
   try {
     // Toggle: if already marked this way, clear it
     const row = document.getElementById(`consensus-row-${q}`);
@@ -669,9 +666,15 @@ async function markAnswer(q, isCorrect) {
       newValue = null;
     }
 
+    // Send the input value as answerText. /mark upserts: it persists the
+    // text on insert (e.g. an auto-populated value the user is committing
+    // to), and only touches is_correct on conflict.
+    const input = document.getElementById(`consensus-input-${q}`);
+    const answerText = input ? input.value : '';
+
     await apiFetch(`/api/consensus/quiz/${currentQuiz.id}/${q}/mark`, {
       method: 'PUT',
-      body: JSON.stringify({ isCorrect: newValue })
+      body: JSON.stringify({ isCorrect: newValue, answerText })
     });
     refreshConsensus();
   } catch (e) {
