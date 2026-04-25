@@ -791,13 +791,14 @@ async function uploadAnswerImage() {
   form.append('answerImage', fileInput.files[0]);
 
   try {
-    await apiFetch(`/api/admin/quiz/${currentQuiz.id}/answers-image`, {
+    const id = currentQuiz.id;
+    await apiFetch(`/api/admin/quiz/${id}/answers-image`, {
       method: 'POST',
       headers: { 'X-Admin-Key': password },
       body: form
     });
     showToast('Answer image uploaded!', 'success');
-    await loadQuiz();
+    await loadSpecificQuiz(id);
   } catch (e) {
     showToast(e.message, 'error');
   }
