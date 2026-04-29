@@ -111,7 +111,7 @@ input, select, textarea {
   width: 40%;
   min-width: 300px;
   max-width: 500px;
-  overflow-y: auto;
+  overflow: auto;
   border-right: 1px solid var(--border);
   background: var(--surface);
   padding: 1rem;
@@ -128,9 +128,13 @@ input, select, textarea {
 }
 
 .image-pane img.zoomed {
-  cursor: zoom-out;
+  cursor: grab;
   width: auto;
   max-width: none;
+}
+
+.image-pane img.zoomed.panning {
+  cursor: grabbing;
 }
 
 .answer-toggle-btn {
@@ -422,33 +426,38 @@ th.col-consensus {
   color: var(--certain-text);
 }
 
-.confidence-select {
-  padding: 0.15rem 0.3rem;
+.confidence-pill {
+  padding: 0.15rem 0.5rem;
   border: 1px solid var(--border);
   border-radius: 10px;
   font-size: 0.7rem;
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
+  text-transform: lowercase;
+  line-height: 1.2;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
-.confidence-select.conf-guess {
+.confidence-pill.conf-guess {
   background: var(--guess-bg);
   color: var(--guess-text);
 }
 
-.confidence-select.conf-maybe {
+.confidence-pill.conf-maybe {
   background: var(--maybe-bg);
   color: var(--maybe-text);
 }
 
-.confidence-select.conf-certain {
+.confidence-pill.conf-certain {
   background: var(--certain-bg);
   color: var(--certain-text);
 }
 
-.confidence-select:focus {
-  background: var(--surface);
-  color: var(--text);
+.confidence-pill:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .vote-controls {

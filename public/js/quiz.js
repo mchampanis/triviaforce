@@ -190,6 +190,7 @@ async function renderQuiz() {
     qImg.src = `/uploads/${currentQuiz.id}/${currentQuiz.question_image}`;
     qImg.style.display = 'block';
     qImg.onclick = () => qImg.classList.toggle('zoomed');
+    setupImagePan(qImg);
   }
 
   // Answer image (hidden by default, revealed by button)
@@ -210,6 +211,7 @@ async function renderQuiz() {
       }
     };
     aImg.onclick = () => aImg.classList.toggle('zoomed');
+    setupImagePan(aImg);
   } else {
     aSection.style.display = 'none';
     aToggle.style.display = 'none';
@@ -236,6 +238,52 @@ async function renderQuiz() {
   setupAdmin(currentQuiz);
 }
 
+
+// Drag-to-pan a zoomed image inside its scroll pane. Native touch-scroll
+// already pans on mobile, so we only intercept mouse/pen pointers.
+function setupImagePan(img) {
+  const pane = img.closest('.image-pane');
+  if (!pane) return;
+  let dragging = false;
+  let startX, startY, startScrollX, startScrollY, moved;
+  img.addEventListener('pointerdown', (e) => {
+    if (!img.classList.contains('zoomed')) return;
+    if (e.pointerType === 'touch') return;
+    dragging = true;
+    moved = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    startScrollX = pane.scrollLeft;
+    startScrollY = pane.scrollTop;
+    img.classList.add('panning');
+    img.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  img.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
+    pane.scrollLeft = startScrollX - dx;
+    pane.scrollTop = startScrollY - dy;
+  });
+  const end = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    img.classList.remove('panning');
+    if (img.hasPointerCapture(e.pointerId)) img.releasePointerCapture(e.pointerId);
+  };
+  img.addEventListener('pointerup', end);
+  img.addEventListener('pointercancel', end);
+  // Suppress the zoom-out click if the user actually dragged.
+  img.addEventListener('click', (e) => {
+    if (moved) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      moved = false;
+    }
+  }, true);
+}
 
 function buildAnswerGrid() {
   const container = document.getElementById('questionsContainer');
@@ -285,12 +333,10 @@ async function refreshAnswers() {
   if (dirtyInputs.size > 0) {
     return;
   }
-  // Skip re-render if the user is interacting with an input or the
-  // confidence dropdown inside the grid -- rebuilding the table would
-  // yank focus and close the open select on both desktop and mobile.
+  // Skip re-render if the user is interacting with an input inside the grid
+  // -- rebuilding would yank focus while they're typing.
   const active = document.activeElement;
-  if (active && (active.tagName === 'INPUT' || active.tagName === 'SELECT')
-      && active.closest('#answerGrid')) {
+  if (active && active.tagName === 'INPUT' && active.closest('#answerGrid')) {
     return;
   }
   try {
@@ -310,8 +356,8 @@ function renderAnswerGrid(answers) {
     if (input) {
       savedInputs[q] = {
         text: input.value,
-        confidence: conf ? conf.value : 'certain',
-        preserve: input.matches(':focus') || (conf && conf.matches(':focus')) || dirtyInputs.has(q)
+        confidence: conf ? conf.dataset.confidence : 'certain',
+        preserve: input.matches(':focus') || dirtyInputs.has(q)
       };
     }
   }
@@ -379,16 +425,13 @@ function renderAnswerGrid(answers) {
         const useValue = saved && saved.preserve ? saved.text : (a ? a.text : '');
         const useConf = saved && saved.preserve ? saved.confidence : (a ? a.confidence : 'certain');
         td.classList.add('col-me');
+        const confDisabled = !useValue.trim();
         td.innerHTML = `
           <div class="cell-input">
             <input id="input-${q}" value="${escapeHtml(useValue)}"
-              placeholder="..." oninput="dirtyInputs.add(${q})" onchange="submitAnswer(${q})"
+              placeholder="..." oninput="dirtyInputs.add(${q}); syncConfEnabled(${q})" onchange="submitAnswer(${q})"
               onblur="this.scrollLeft=0; this.setSelectionRange(0,0)">
-            <select class="confidence-select conf-${useConf}" id="confidence-${q}" tabindex="-1" onchange="updateConfStyle(this); this.blur(); submitAnswer(${q})" title="How confident are you?">
-              <option value="guess" ${useConf === 'guess' ? 'selected' : ''}>guess</option>
-              <option value="maybe" ${useConf === 'maybe' ? 'selected' : ''}>maybe</option>
-              <option value="certain" ${useConf === 'certain' ? 'selected' : ''}>certain</option>
-            </select>
+            <button type="button" class="confidence-pill conf-${useConf}" id="confidence-${q}" data-confidence="${useConf}" tabindex="-1" ${confDisabled ? 'disabled' : ''} onclick="cycleConfidence(${q})" title="${confDisabled ? 'Type an answer first' : 'Tap to change confidence'}">${useConf}</button>
           </div>
         `;
       } else if (a) {
@@ -528,7 +571,7 @@ async function saveAllAnswers() {
         body: JSON.stringify({
           questionNumber: q,
           text: text,
-          confidence: conf ? conf.value : 'certain'
+          confidence: conf ? conf.dataset.confidence : 'certain'
         })
       });
       if (text) saved++;
@@ -553,7 +596,7 @@ async function submitAnswer(q) {
       body: JSON.stringify({
         questionNumber: q,
         text: text,
-        confidence: conf.value
+        confidence: conf ? conf.dataset.confidence : 'certain'
       })
     });
     dirtyInputs.delete(q);
@@ -855,9 +898,29 @@ async function deleteQuiz() {
   }
 }
 
-function updateConfStyle(el) {
-  el.classList.remove('conf-guess', 'conf-maybe', 'conf-certain');
-  el.classList.add('conf-' + el.value);
+const CONF_CYCLE = ['guess', 'maybe', 'certain'];
+
+function cycleConfidence(q) {
+  const conf = document.getElementById(`confidence-${q}`);
+  if (!conf || conf.disabled) return;
+  const current = conf.dataset.confidence || 'certain';
+  const next = CONF_CYCLE[(CONF_CYCLE.indexOf(current) + 1) % CONF_CYCLE.length];
+  conf.dataset.confidence = next;
+  conf.classList.remove('conf-guess', 'conf-maybe', 'conf-certain');
+  conf.classList.add('conf-' + next);
+  conf.textContent = next;
+  submitAnswer(q);
+}
+
+// Confidence is meaningless without an answer -- the server deletes empty
+// answers, so disabling the pill makes that contract visible.
+function syncConfEnabled(q) {
+  const input = document.getElementById(`input-${q}`);
+  const conf = document.getElementById(`confidence-${q}`);
+  if (!input || !conf) return;
+  const empty = !input.value.trim();
+  conf.disabled = empty;
+  conf.title = empty ? 'Type an answer first' : 'Tap to change confidence';
 }
 
 // ---- Start ----
